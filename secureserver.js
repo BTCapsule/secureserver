@@ -8,18 +8,47 @@ const crypto = require('crypto');
 const forge = require('node-forge');
 const cookieParser = require('cookie-parser');
 const readline = require('readline');
-
-
 const WebSocket = require('ws');
+const rateLimit = require('express-rate-limit');
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limit each IP to 100 requests per windowMs
+});
+
+
 const app = express();
 app.use(express.json());
-
+app.use(limiter);
 app.use(cookieParser());
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
+
+
+// Add near the top with other requires
+const BLOCKED_IPS_FILE = 'blocked_ips.json';
+let blockedIPs = new Set();
+
+// Load blocked IPs from file
+try {
+  if (fs.existsSync(BLOCKED_IPS_FILE)) {
+    blockedIPs = new Set(JSON.parse(fs.readFileSync(BLOCKED_IPS_FILE, 'utf8')));
+  }
+} catch (error) {
+  console.error('Error loading blocked IPs:', error);
+}
+
+
+
+
+
+
+
 
 
 
@@ -254,14 +283,19 @@ function broadcastNewDevicePrompt(ip) {
 
   let pendingPrompts = new Map();
 
+// Modify handleDeviceResponse function
 function handleDeviceResponse(data) {
   const { ip, allow } = data;
   const resolver = pendingPrompts.get(ip);
   if (resolver) {
+    if (!allow) {
+      // Block IP when denied
+      blockedIPs.add(ip);
+      fs.writeFileSync(BLOCKED_IPS_FILE, JSON.stringify([...blockedIPs]));
+    }
     resolver(allow);
     pendingPrompts.delete(ip);
     
-    // Broadcast the response to all clients
     const responseMessage = JSON.stringify({ 
       type: 'deviceResponseUpdate', 
       ip, 
@@ -269,7 +303,7 @@ function handleDeviceResponse(data) {
     });
     clients.forEach(client => client.send(responseMessage));
     
-    console.log(`New user with IP ${ip} was ${allow ? 'accepted' : 'denied'} by the client`);
+    console.log(`New user with IP ${ip} was ${allow ? 'accepted' : 'denied and blocked'}`);
   }
 }
 
@@ -323,10 +357,15 @@ function promptForAccess(ip) {
 
 
 
-
-app.get('/server.css', (req, res) => {
-  res.sendFile(path.join(__dirname, 'server.css'));
+// Add middleware before other routes
+app.use((req, res, next) => {
+  if (blockedIPs.has(req.ip)) {
+    return res.status(403).send('Access Denied: IP is blocked');
+  }
+  next();
 });
+
+
 
 app.get('/cookies.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'cookies.js'));
@@ -359,6 +398,7 @@ app.post('/create-pin', express.json(), (req, res) => {
     // Broadcast new user added
     const message = JSON.stringify({
         type: 'newUserCreated',
+		userNumber: userNumber,
         ip: req.ip
     });
     clients.forEach(client => client.send(message));
@@ -374,6 +414,8 @@ app.post('/verify-pin', express.json(), (req, res) => {
   const clientEncryptHash = req.cookies.encrypt;
 
   const files = getSecretFiles();
+  let decryptionError = false;
+
   for (const file of files) {
     try {
       const encryptedContent = fs.readFileSync(file, 'utf8');
@@ -399,11 +441,17 @@ app.post('/verify-pin', express.json(), (req, res) => {
         }
       }
     } catch (error) {
-      // Silently continue to the next file
+      decryptionError = true;
+      continue; // Continue to next file
     }
   }
 
-  res.status(401).json({ message: 'Invalid PIN' });
+  // Only send one type of error response
+  res.status(401).json({ 
+    success: false,
+    message: 'Invalid PIN',
+    clearPin: true  // Add this flag to tell frontend to clear the PIN
+  });
 });
 
 
