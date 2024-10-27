@@ -1,46 +1,30 @@
 # SecureServer
 
-A secure Node.js server implementation featuring multi-user authentication, PIN protection, IP blacklisting, and real-time device authorization.
+A secure Node.js server implementation featuring real-time device authorization and cookie-based encryption.
 
-## Features
+## Core Security Architecture
 
-- 🔐 Multi-user authentication system
-- 📱 PIN-based access control
-- 🛡️ IP blacklisting for denied access attempts
-- 🔄 Real-time WebSocket notifications
-- 🌐 HTTPS with auto-generated SSL certificates
-- ⚡ Rate limiting protection
-- 🔑 Automatic session key rotation
-- 👥 Device authorization prompts
+### Dual-Cookie Encryption System
+- **Secret Cookie**: Identifies user's encrypted `.secret` file
+- **Encrypt Cookie**: Contains the only key capable of decrypting the user's data
+- No decryption keys are ever stored on the server
+- Even with full server access, files remain encrypted without client cookies
 
+### How It Works
+1. User creates PIN
+2. Server generates two SHA-256 hashes:
+   - `secret` hash stored in `.secret` file and browser
+   - `encrypt` hash stored only in browser
+3. `.secret` file is encrypted using `encrypt` hash as key
+4. To access data:
+   - Browser sends both cookies
+   - `encrypt` cookie decrypts `.secret` file
+   - `secret` cookie verifies user identity
+   - PIN provides final authentication layer
 
-## Security Architecture
-
-### Cookie-Based Secret Management
-The server uses a dual-cookie system for secure authentication and data encryption:
-
-- **Secret Cookie**: Stores a unique hash that identifies the user's secret file. Stored on the browser in the in `.secret` file.
-
-- **Encrypt Cookie**: Contains the encryption key hash used to decrypt the `.secret` file on the server. Stored only on authorized browsers.
-- Cookies are secure, same-site restricted, and HTTPS-only
-
-### Secret File Encryption
-- User data is encrypted using AES-256-CBC encryption
-- Each user's data is stored in a separate `.secret` file
-- Files are encrypted using the encrypt cookie as the key
-- Contains user's secret hash and PIN (if set)
-
-### Session Security
-- Automatic key rotation on successful PIN verification
-- New secret and encrypt hashes generated each session
-- Secret files are automatically re-encrypted with new keys
-- Session cookies expire after 1 hour
-- Rate limiting prevents brute force attempts
-
-
-
-
-
-
-
-
+### Security Features
+- Hourly key rotation with new encryption hashes
+- Real-time notifications of new device access
+- Instant remote device revocation
+- IP blacklisting for denied attempts
+- Rate limiting protection
