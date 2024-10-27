@@ -201,10 +201,12 @@ function handleDeviceResponseUpdate(ip, allow) {
             <button onclick="dismissMessage(this.parentElement)">Dismiss</button>
         `;
         document.body.appendChild(message);
+        // Remove the acceptance message after 3 seconds
         setTimeout(() => {
-            message.remove();
+            message.classList.add('hide');
+            setTimeout(() => message.remove(), 500);
         }, 3000);
-    } else if (!allow) {
+    } else {
         message.innerHTML = `
             <span>User [${ip}] was denied</span>
             <button onclick="dismissMessage(this.parentElement)">Dismiss</button>
