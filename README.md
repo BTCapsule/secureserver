@@ -4,6 +4,18 @@ A secure Node.js server implementation featuring real-time device authorization 
 
 ## Core Security Architecture
 
+
+### User Experience Flow
+
+1. Server starts and displays its public IP address
+2. When a user visits the IP on their device:
+   - Page loads `main.html` and waits for authorization
+   - Server prompts existing users via WebSocket for approval
+   - Server also provides CLI prompt for approval
+   - If approved, user proceeds to PIN creation and index.html
+   - If denied, IP is blacklisted
+
+
 ### Dual-Cookie Encryption System
 - **Secret Cookie**: Identifies user's encrypted `.secret` file
 - **Encrypt Cookie**: Contains the only key capable of decrypting the user's data
