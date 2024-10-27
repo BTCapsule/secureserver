@@ -161,20 +161,15 @@ function submitPin() {
         },
         body: JSON.stringify({ pin: pinValue }),
     })
-    .then(response => {
-        if (response.ok) {
-            window.location.href = '/';
-        } else {
-            alert('Error creating PIN. Please try again.');
-            pinValue = ''; // Reset pinValue
-            updatePinDots(); // Update the visual representation
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirectUrl;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('An error occurred. Please try again.');
-        pinValue = ''; // Reset pinValue
-        updatePinDots(); // Update the visual representation
     });
 }
 
