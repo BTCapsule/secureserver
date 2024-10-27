@@ -157,26 +157,22 @@ async function checkHashAndPin(secretHash, encryptHash) {
 
 
 async function checkSessionAuth(req, res, next) {
-    // Keep existing authentication logic
     const clientSecretHash = req.cookies.secret;
     const clientEncryptHash = req.cookies.encrypt;
     
     const files = getSecretFiles();
     const currentFileCount = files.length;
     
-    // Set the secret count cookie
     res.cookie('secret_count', currentFileCount.toString(), { 
         secure: true, 
         sameSite: 'lax', 
         maxAge: 3600000 
     });
 
-    // If there are no secret files, allow access
     if (files.length === 0) {
         return next();
     }
 
-    // Keep existing authentication checks
     if (clientSecretHash && clientEncryptHash) {
         let fileFound = false;
         for (const file of files) {
@@ -189,8 +185,8 @@ async function checkSessionAuth(req, res, next) {
                     fileFound = true;
                     if (pin && !req.cookies.pin_verified) {
                         return res.redirect('/pin');
-                        return next();
                     }
+                    return next(); // Add this line to proceed when authenticated
                 }
             } catch (error) {
                 // Continue to next file if decryption fails
@@ -198,7 +194,6 @@ async function checkSessionAuth(req, res, next) {
         }
 
         if (!fileFound) {
-            // Clear cookies if no matching file found
             for (const cookieName in req.cookies) {
                 res.clearCookie(cookieName);
             }
@@ -206,8 +201,7 @@ async function checkSessionAuth(req, res, next) {
         }
     }
 
-    // If no valid cookies present, redirect to main
-    res.redirect('/main');
+    return res.redirect('/main');
 }
 
 
@@ -369,7 +363,7 @@ app.post('/create-pin', express.json(), (req, res) => {
     });
     clients.forEach(client => client.send(message));
 
-    res.sendStatus(200);
+    res.json({ success: true, redirectUrl: '/pin' });
 });
 
 
