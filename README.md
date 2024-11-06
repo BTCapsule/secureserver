@@ -40,3 +40,15 @@ A secure Node.js server implementation featuring real-time device authorization 
 - Instant remote device revocation
 - IP blacklisting for denied attempts
 - Rate limiting protection
+
+### Examples
+
+Pictures I Keep At My Place (pikamp), a photo app that allows you to view, upload, and save images between your phone and computer:
+
+https://github.com/BTCapsule/pikamp
+
+Node On Phone, a Bitcoin wallet that uses your own node:
+
+https://github.com/BTCapsule/nop/tree/main
+
+
