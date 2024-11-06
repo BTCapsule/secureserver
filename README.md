@@ -49,6 +49,5 @@ https://github.com/BTCapsule/pikamp
 
 Node On Phone, a Bitcoin wallet that uses your own node:
 
-https://github.com/BTCapsule/nop/tree/main
-
+https://github.com/BTCapsule/nop
 
