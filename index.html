@@ -1,10 +1,46 @@
 <!DOCTYPE html>
 <html>
     <head>
-    
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                overflow-y: auto;
+            }
+            .container {
+                position: relative;
+                height: calc(100vh + 50px);
+            }
+            iframe {
+                width: 100%;
+                height: 100vh;
+                border: none;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+            .scroll-space {
+                width: 100%;
+                height: 50px;
+                background: black;
+                position: absolute;
+                bottom: 0;
+            }
+        </style>
     </head>
     <body>
-<script src="cookies.js"></script>
-      <h1>Hello world</h1>
+        <script src="cookies.js"></script>
+
+<!-- USE THIS TO PROXY A PREBUILT APPS -->
+
+<!--
+        <div class="container">
+            <iframe src="/iris"></iframe>
+            <div class="scroll-space"></div>
+        </div>
+-->
+
     </body>
 </html>
